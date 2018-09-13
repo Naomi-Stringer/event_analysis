@@ -60,6 +60,7 @@ data = solar_analytics.get_august_data_using_file_path(TIME_INTERVAL, DATA_FILE_
 output_df = data[data['s_state'] == REGION]
 
 #------------------------ Print to csv ------------------------
+# NOTE - you will need to set up an 'output_csv_files' folder in the same folder where you save this python file. The output csv will be saved to this folder.
 output_df.to_csv('output_csv_files/' + REGION + '_' + DATA_DATE + '_utc_corrected_' +str(TIME_INTERVAL)+'_sec_v8.csv')
 
 

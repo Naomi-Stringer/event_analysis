@@ -12,7 +12,7 @@ import solar_analytics
 
 
 def get_extreme_response_characteristics(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH, INVERTER_DATA_PATH, DATA_DATE, load_list, pv_list, t_0, T_START_T_0, T_END_ESTIMATE, T_END_ESTIMATE_NADIR, POWER_ROUND_TO_ZERO_VAL_KW, RIDE_THROUGH_PERCENTAGE_DROP_MAX, DIP_PERCENTAGE_DROP_MAX, CAT_3_NADIR_DROP_MAX, CAT_4_NADIR_DROP_MAX, CAT_5_NADIR_DROP_MAX, DISCONNECT_CAT_APPROX_ZERO_KW, PERCENTAGE_RETURN_MINIMUM):
-    """Categorises PV response"""
+    """Categorises PV response immediately following an event - most suitable for voltage events"""
 
     #------------------------ Step 1: Get data ------------------------
     # IF 25 August 2018 data then need to use different fnct in factory to get data
@@ -25,8 +25,9 @@ def get_extreme_response_characteristics(REGION, TIME_INTERVALS, DATA_FILE_PATH,
         print(data.head())
 
     else:
-        data = solar_analytics.get_data_using_file_path(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH, INVERTER_DATA_PATH)
+        # data = solar_analytics.get_data_using_file_path(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH, INVERTER_DATA_PATH)
         # print(data)
+        print("Cannot get data because not correct data_date")
 
 
     # Get c_id_info df, this df will contain analysis output (i.e. nadir, ramp rates etc.)
@@ -117,24 +118,6 @@ def get_extreme_response_characteristics(REGION, TIME_INTERVALS, DATA_FILE_PATH,
     # output_df['error_11'] = np.nan
     # error_12: no data at t_0 when getting total response time
     output_df['error_12'] = np.nan
-
-    # #------------------------ Step 3: Apply polarity correction to data THEN calc power ------------------------
-    # # Get error flags
-    # error_flags_df = get_error_flags.get_error_flags(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH, INVERTER_DATA_PATH, DATA_DATE, FRACTION_FOR_MIXED_POLARITY, LOAD_FRACTION_FOR_MIXED_POLARITY, PV_GEN_START_HR, PV_GEN_END_HR, load_list, pv_list)
-    # print(error_flags_df)
-    # # Loop through c_ids in data and apply polarity_fix
-    # for c_id in c_ids_data:
-        
-    #     # Get polarity
-    #     c_id_polarity = error_flags_df.loc[c_id,'polarity_fix']
-    #     # print(c_id_polarity)
-
-    #     # If the polarity is negative (-1) then *-1, else no operation required.
-    #     if c_id_polarity == -1.0 :
-
-    #         # Multiplies the values in data in the energy column for which c_id is the current c_id by -1
-    #         data.loc[data['c_id'] == c_id, 'energy'] *= c_id_polarity
-
 
     # Calculate power
     data = calculate_power_from_energy(data, str(TIME_INTERVALS) + '_sec')
@@ -319,3 +302,20 @@ def get_extreme_response_characteristics(REGION, TIME_INTERVALS, DATA_FILE_PATH,
     output_df['t_to_return_within_10_percent'] = (output_df['t_when_p_within_10_percent'] - output_df['t_0']).astype('timedelta64[s]')
 
     return output_df
+
+
+#------------------------ calculate power from energy ------------------------ 
+def calculate_power_from_energy(input_df, data_set_time_increment):
+    """Takes a df containing 'energy' column, and a data set time increment (either '5_min', '30_sec' or '5_sec') and returns df with new col 'power_kW' NB the energy column contains Joules """
+    if data_set_time_increment == '5_min':
+        input_df['power_kW'] = input_df['energy'] * 0.012
+    elif data_set_time_increment == '30_sec':
+        input_df['power_kW'] = input_df['energy'] * 0.12 / 3600.0
+    elif data_set_time_increment == '5_sec':
+        input_df['power_kW'] = input_df['energy'] * 0.72 / 3600.0
+    elif data_set_time_increment == '60_sec':
+        input_df['power_kW'] = input_df['energy'] * 0.06 / 3600.0
+    else:
+        print('ERROR - did not specify which data set for energy --> power calc')
+    
+    return input_df
