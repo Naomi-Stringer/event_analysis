@@ -50,6 +50,9 @@ CAT_5_NADIR_DROP_MAX = 0.75
 DISCONNECT_CAT_APPROX_ZERO_KW = 0.1
 PERCENTAGE_RETURN_MINIMUM = 0.1
 
+# For getting site capacity factor, indicates the minute past 1pm on 25 August from which CF will be calculated and returned
+MINUTE_NOW_START = 5
+
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -62,6 +65,12 @@ output_df = data[data['s_state'] == REGION]
 #------------------------ Print to csv ------------------------
 # NOTE - you will need to set up an 'output_csv_files' folder in the same folder where you save this python file. The output csv will be saved to this folder.
 output_df.to_csv('output_csv_files/' + REGION + '_' + DATA_DATE + '_utc_corrected_' +str(TIME_INTERVAL)+'_sec_v8.csv')
+
+
+# #------------------------ Get site capacity factor for PV gen ------------------------
+# site_df = util.get_pv_CF_by_site(output_df, pv_list, MINUTE_NOW_START)
+# # Print outcome to csv
+# site_df.to_csv('output_csv_files/' + REGION + '_' + DATA_DATE + '_approx_cap_factor_by_site_id_' +str(TIME_INTERVAL)+'_sec_v4.csv')
 
 
 # #------------------------ Get categories ananlysis - SLOW TO RUN! ------------------------
