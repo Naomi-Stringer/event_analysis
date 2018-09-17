@@ -14,7 +14,8 @@ import util
 def get_august_data_using_file_path(time_interval, data_file_path, meta_data_file_path, inverter_data_path):
 
     # Get time series data
-    time_series_data = pd.read_csv("/mnt/f/05_Solar_Analytics/" + data_file_path,index_col = 'ts', parse_dates=True)
+    # time_series_data = pd.read_csv("/mnt/f/05_Solar_Analytics/" + data_file_path,index_col = 'ts', parse_dates=True)
+    time_series_data = pd.read_csv("F:\\05_Solar_Analytics\\" + data_file_path,index_col = 'ts', parse_dates=True) # File path format for running in Windows
 
     # Get meta data
     site_data = pd.read_csv("/mnt/f/05_Solar_Analytics/" + meta_data_file_path)
