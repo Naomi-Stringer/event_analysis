@@ -1,3 +1,5 @@
+# Get error flags
+# Contains a function to identify erroneous data (should probably move to 'util' and update scripts which call this function accordingly!) 
 
 
 #------------------------ Step 0: Import required packages ------------------------
@@ -84,14 +86,6 @@ def get_error_flags(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH,
     # NOTE - it is possible that there are c_ids in the data which are not in the meta data file - worth checking! Checked - this is fine, same number of c_ids in both.
     c_ids_data = data['c_id'].drop_duplicates().tolist()
     error_flags_df = error_flags_df.loc[c_ids_data]
-
-    # NEW!!!!!
-    # Filter for final day in March data set
-    test_year = 2017
-    test_month = 3
-    test_start_day = 29
-    test_end_day = 31
-    data = data.loc[datetime.date(year = test_year, month = test_month, day = test_start_day) : datetime.date(year = test_year, month = test_month, day = test_end_day)]
 
     # Get two separate lists of c_ids remaining which are load / PV
     pv_cids = error_flags_df[error_flags_df['con_type'].isin(pv_list)]

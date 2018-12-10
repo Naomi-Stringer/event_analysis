@@ -29,7 +29,8 @@ DATA_FILE_PATH = '2018-09-03_solar_analytics_data_transfer/2018-08-25_sa_qld_nao
 META_DATA_FILE_PATH = '2018-09-03_solar_analytics_data_transfer/circuit_details_TB_V9.csv'
 INVERTER_DATA_PATH = '2018-09-03_solar_analytics_data_transfer/site_details_multiples_summarised_NS_v2.csv'
 
-# REGION = 'ACT' #'TAS' or 'ACT' are stored in separate file
+#'TAS' or 'ACT' are stored in separate file
+# REGION = 'ACT' 
 # TIME_INTERVAL = 60 #5 or 30 or 60
 # DATA_FILE_PATH = '2018-09-03_solar_analytics_data_transfer/2018-05-25_act_tas_fault_aemo.csv'
 # META_DATA_FILE_PATH = '2018-09-03_solar_analytics_data_transfer/act_tas_circuit_details_NS_v1.csv'
