@@ -1,0 +1,84 @@
+<LoadDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+
+            Button:
+                text: "Load"
+                on_release: root.load(filechooser.selection, root.write_2_id)
+
+
+<Row@BoxLayout>
+    orientation: 'horizontal'
+    size_hint: 1, 0.5
+    TextInput:
+        id: text_box
+        size_hint: 4, 1
+    Button:
+        text: '...'
+        on_release: root.parent.choose_file(root.id)
+    Button:
+        text: 'x'
+        on_release: root.parent.remove_data_source(root.id)
+
+<SubSetLoader@GridLayout>
+
+<DataLoader>
+    size: 500, 400
+    GridLayout:
+        cols: 1
+        rows: 5
+        Label:
+            text: "Data Sources"
+            size_hint: 1, 0.1
+        SubSetLoader:
+            id: time_series
+            size_hint: 1, 1
+            cols: 1
+            rows: 5
+            Label:
+                text: 'Time series:'
+                size: 50, 1
+            Button:
+                text: "+"
+                width: 100
+                size_hint: 0.1, 0.2
+                pos_hint: {'x': 0.1}
+                on_release: root.ids['time_series'].add_data_source()
+        SubSetLoader:
+            id: meta_data
+            size_hint: 1, 1
+            cols: 1
+            rows: 5
+            Label:
+                text: 'Meta data:'
+            Button:
+                text: "+"
+                size_hint: 0.1, 0.1
+                pos_hint: {'x': 0.1}
+                on_release: root.ids['meta_data'].add_data_source()
+        SubSetLoader:
+            id: inverter_data
+            size_hint: 1, 1
+            cols: 1
+            rows: 5
+            Label:
+                text: 'Inverter data:'
+            Button:
+                text: "+"
+                size_hint: 0.1, 0.1
+                pos_hint: {'x': 0.1}
+                on_release: root.ids['inverter_data'].add_data_source()
+        Button:
+            text: 'Load Data ->'
+            size_hint: 1, 0.5
