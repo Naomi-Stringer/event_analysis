@@ -4,10 +4,20 @@
 # Import packages required for program
 import numpy as np
 import pandas as pd
+pd.set_option('display.max_columns', 500)
+pd.set_option('display.max_rows', 500)
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import calendar
+import seaborn as sns
+import itertools
+import datetime
+from time import gmtime, strftime
 
 import solar_analytics
+import requested_regions
 import util
+import util_plotting
 
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -60,8 +70,7 @@ def get_error_flags(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH,
         print(data.head())
 
     else:
-        print('Incorrect data date for this script')
-        # data = solar_analytics.get_data_using_file_path(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH, INVERTER_DATA_PATH)
+        data = solar_analytics.get_data_using_file_path(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH, INVERTER_DATA_PATH)
         # print(data)
 
     # Get c_id_info df, this df will contain error flags
@@ -75,6 +84,14 @@ def get_error_flags(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH,
     # NOTE - it is possible that there are c_ids in the data which are not in the meta data file - worth checking! Checked - this is fine, same number of c_ids in both.
     c_ids_data = data['c_id'].drop_duplicates().tolist()
     error_flags_df = error_flags_df.loc[c_ids_data]
+
+    # NEW!!!!!
+    # Filter for final day in March data set
+    test_year = 2017
+    test_month = 3
+    test_start_day = 29
+    test_end_day = 31
+    data = data.loc[datetime.date(year = test_year, month = test_month, day = test_start_day) : datetime.date(year = test_year, month = test_month, day = test_end_day)]
 
     # Get two separate lists of c_ids remaining which are load / PV
     pv_cids = error_flags_df[error_flags_df['con_type'].isin(pv_list)]
@@ -255,4 +272,17 @@ def get_error_flags(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH,
     # Output error flags
     return error_flags_df
 
+
+# #------------------------ Step 5: Call function and export to csv ------------------------
+
+
+# # Call function
+# error_flags_df = get_error_flags(REGION, TIME_INTERVALS, DATA_FILE_PATH, META_DATA_FILE_PATH, INVERTER_DATA_PATH, DATA_DATE, FRACTION_FOR_MIXED_POLARITY, LOAD_FRACTION_FOR_MIXED_POLARITY, PV_GEN_START_HR, PV_GEN_END_HR, load_list, pv_list)
+
+# # Print output
+# print(error_flags_df)
+# # print(len(error_flags_df))
+
+# # Save to csv
+# error_flags_df.to_csv('output_csv_files/error_flags_' + REGION + '_' + DATA_DATE + '_' +str(TIME_INTERVALS)+'_sec_v2.csv')
 
