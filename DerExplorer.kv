@@ -5,7 +5,7 @@
         orientation: "vertical"
         FileChooserListView:
             id: filechooser
-
+            path: root.start_path
         BoxLayout:
             size_hint_y: None
             height: 30
@@ -17,68 +17,225 @@
                 text: "Load"
                 on_release: root.load(filechooser.selection, root.write_2_id)
 
+<SaveDialog>:
+    BoxLayout:
+        size: root.size
+        pos: root.pos
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            on_selection: text_input.text = self.selection[0] or ''
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 30
+            multiline: False
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+            Button:
+                text: "Save"
+                on_release: root.save(filechooser.path, text_input.text)
 
-<Row@BoxLayout>
+
+<Row@GridLayout>
     orientation: 'horizontal'
-    size_hint: 1, 0.5
+    cols: 4
+    size_hint_x: None
+    width: 500
+    Label:
+        text: ''
+        size_hint_x: None
+        width: 40
     TextInput:
         id: text_box
-        size_hint: 4, 1
+        size_hint_x: None
+        width: 600
     Button:
         text: '...'
-        on_release: root.parent.choose_file(root.id)
+        size_hint_x: None
+        width: 50
+        on_release: root.parent.choose_file(root.id, root)
     Button:
         text: 'x'
+        size_hint_x: None
+        width: 50
         on_release: root.parent.remove_data_source(root.id)
 
 <SubSetLoader@GridLayout>
+    cols: 1
+    size_hint_y: None
+    height: 40
 
-<DataLoader>
+<ExplorerPanel>
+
     size: 500, 400
-    GridLayout:
-        cols: 1
-        rows: 5
-        Label:
-            text: "Data Sources"
-            size_hint: 1, 0.1
-        SubSetLoader:
-            id: time_series
-            size_hint: 1, 1
+    do_default_tab: False
+
+    TabbedPanelItem:
+
+        text: 'Data Loader'
+        id: data_parameters
+
+        GridLayout:
             cols: 1
-            rows: 5
-            Label:
-                text: 'Time series:'
-                size: 50, 1
-            Button:
-                text: "+"
-                width: 100
-                size_hint: 0.1, 0.2
-                pos_hint: {'x': 0.1}
-                on_release: root.ids['time_series'].add_data_source()
-        SubSetLoader:
-            id: meta_data
-            size_hint: 1, 1
-            cols: 1
-            rows: 5
-            Label:
-                text: 'Meta data:'
-            Button:
-                text: "+"
-                size_hint: 0.1, 0.1
-                pos_hint: {'x': 0.1}
-                on_release: root.ids['meta_data'].add_data_source()
-        SubSetLoader:
-            id: inverter_data
-            size_hint: 1, 1
-            cols: 1
-            rows: 5
-            Label:
-                text: 'Inverter data:'
-            Button:
-                text: "+"
-                size_hint: 0.1, 0.1
-                pos_hint: {'x': 0.1}
-                on_release: root.ids['inverter_data'].add_data_source()
-        Button:
-            text: 'Load Data ->'
-            size_hint: 1, 0.5
+            height: self.minimum_height
+            id: by_set
+
+            BoxLayout:
+                size_hint_y: None
+                height: 40
+                Button:
+                    text: 'Load Settings'
+                Button:
+                    text: 'Save Settings'
+                    on_release: root.open_save_dialog()
+                Button:
+                    text: 'Load Data ->'
+                    on_release: root.load_data()
+
+
+            SubSetLoader:
+                id: time_series
+                BoxLayout:
+                    id: subsetlabel
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    size: 500, 20
+                    Label:
+                        halign: 'left'
+                        text: 'Time series:'
+                        size_hint_x: None
+                    Label:
+                        text: ''
+                        size_hint_x: 1
+                GridLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    size_hint_x: None
+                    size: 500, 20
+                    cols: 3
+                    Label:
+                        text: ''
+                        size_hint_x: None
+                        width: 40
+                    Button:
+                        size_hint_x: None
+                        size_hint_y: None
+                        text: "+"
+                        size: 20, 20
+                        on_release: root.ids['time_series'].add_data_source()
+                    Label:
+                        text: ''
+                        size_hint: 1, 1
+            SubSetLoader:
+                id: meta_data
+                BoxLayout:
+                    id: subsetlabel
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    size: 500, 20
+                    Label:
+                        halign: 'left'
+                        text: 'Meta Data:'
+                        size_hint_x: None
+                    Label:
+                        text: ''
+                        size_hint_x: 1
+                GridLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    size_hint_x: None
+                    size: 500, 20
+                    cols: 3
+                    Label:
+                        text: ''
+                        size_hint_x: None
+                        width: 40
+                    Button:
+                        size_hint_x: None
+                        size_hint_y: None
+                        text: "+"
+                        size: 20, 20
+                        on_release: root.ids['meta_data'].add_data_source()
+                    Label:
+                        text: ''
+                        size_hint: 1, 1
+            SubSetLoader:
+                id: inverter_data
+                BoxLayout:
+                    id: subsetlabel
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    size: 500, 20
+                    Label:
+                        halign: 'left'
+                        text: 'Inverter Data:'
+                        size_hint_x: None
+                    Label:
+                        text: ''
+                        size_hint_x: 1
+                GridLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    size_hint_x: None
+                    size: 500, 20
+                    cols: 3
+                    Label:
+                        text: ''
+                        size_hint_x: None
+                        width: 40
+                    Button:
+                        size_hint_x: None
+                        size_hint_y: None
+                        text: "+"
+                        size: 20, 20
+                        on_release: root.ids['inverter_data'].add_data_source()
+                    Label:
+                        text: ''
+                        size_hint: 1, 1
+
+            GridLayout:
+                id: time_interval_selection
+                size_hint_y: None
+                height: 20
+                cols: 7
+                Label:
+                    size_hint_x: None
+                    width: 220
+                    text: 'Select data time interval length:'
+                Label:
+                    size_hint_x: None
+                    width: 20
+                    text: '5 s'
+                CheckBox:
+                    size_hint_x: None
+                    width: 20
+                    id: s5
+                    text: "help"
+                    group: 'time'
+                Label:
+                    size_hint_x: None
+                    width: 35
+                    text: ' , 30 s'
+                CheckBox:
+                    size_hint_x: None
+                    width: 20
+                    id: s30
+                    group: 'time'
+                Label:
+                    size_hint_x: None
+                    width: 35
+                    text: ' , 60 s'
+                CheckBox:
+                    size_hint_x: None
+                    width: 20
+                    id: s60
+                    group: 'time'
+
+    TabbedPanelItem:
+        text: 'Data Viewer'
+
