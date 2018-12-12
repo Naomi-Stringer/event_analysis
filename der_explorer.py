@@ -12,6 +12,7 @@ import os
 import solar_analytics
 from time import time
 import pickle
+import visuals
 
 
 class LoadDialog(FloatLayout):
@@ -58,14 +59,14 @@ class SubSetLoader(GridLayout):
         if start_path == '':
             start_path = os.getcwd()
         content = LoadDialog(load=self.write_file_name, cancel=self.dismiss_popup, start_path=start_path)
-        content.set_write_id(write_2_id)
+        self.write_2_id = write_2_id
         self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
         self._popup.open()
 
-    def write_file_name(self, file, write_2_id):
+    def write_file_name(self, file):
         for child in self.children:
-            if child.id == write_2_id:
-                child.ids['text_box'].text = os.path.join(file[0])
+            if child.id == self.write_2_id:
+                child.ids['text_box'].text = os.path.join(file)
         self._popup.dismiss()
 
 
@@ -83,6 +84,9 @@ class ExplorerPanel(TabbedPanel):
                                                                      data_file_path=time_series,
                                                                      meta_data_file_path=meta_data,
                                                                      inverter_data_path=inverter_data)
+        data = solar_analytics.data_filter(data)
+        data = solar_analytics.aggregate_data(data)
+        chart = visuals.area_chart(data)
         print(data)
         print('time to load {}'.format(time() - t0))
 
@@ -109,18 +113,45 @@ class ExplorerPanel(TabbedPanel):
     def open_save_dialog(self):
         start_path = os.getcwd()
         content = SaveDialog(save=self.save_state, cancel=self.dismiss_popup)
-        self._popup = Popup(title="Save data settings", content=content, size_hint=(0.9, 0.9))
+        self._popup = Popup(title="Load data settings", content=content, size_hint=(0.9, 0.9))
         self._popup.open()
 
-    def save_state(self, path, name):
-        path_name = path + '\\' + name
+    def open_load_dialog(self):
+        start_path = os.getcwd()
+        content = LoadDialog(load=self.load_state, cancel=self.dismiss_popup, start_path=start_path)
+        self._popup = Popup(title="Load file", content=content, size_hint=(0.9, 0.9))
+        self._popup.open()
+
+    def save_state(self, path_name):
         state = {}
         state['time interval'], state['time series'], state['meta data'], state['inverter data']\
             = self.get_state()
         if path_name[-2:] != ".p":
-            pickle.dump(state, open(path_name + ".p", "wb"))
+            with open(path_name + ".p", 'wb') as handle:
+                pickle.dump(state, handle, protocol=pickle.HIGHEST_PROTOCOL)
         else:
-            pickle.dump(state, open(path_name, "wb"))
+            with open(path_name, 'wb') as handle:
+                pickle.dump(state, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        self.dismiss_popup()
+
+    def load_state(self, path_name):
+        with open(path_name, 'rb') as handle:
+            state = pickle.load(handle)
+        for name, value in self.ids.items():
+            if name in ['s5', 's30', 's60']:
+                value.active = False
+        if state['time interval'] is not None:
+            self.ids['s' + str(state['time interval'])].active = True
+        for child in self.ids['time_series'].children:
+            if child.id == '1':
+                child.ids['text_box'].text = state['time series']
+        for child in self.ids['meta_data'].children:
+            if child.id == '1':
+                child.ids['text_box'].text = state['meta data']
+        for child in self.ids['inverter_data'].children:
+            if child.id == '1':
+                child.ids['text_box'].text = state['inverter data']
+        self.dismiss_popup()
 
 
 class DerExplorerApp(App):

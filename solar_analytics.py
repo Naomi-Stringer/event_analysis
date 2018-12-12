@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import calendar
 import datetime as dt
+from time import time
 
 import util
 
@@ -143,9 +144,18 @@ def get_data_using_file_path_der_explorer(time_interval, data_file_path, meta_da
     # meta_data_file_path = '2018-09-03_solar_analytics_data_transfer/circuit_details.csv'
     # inverter_data_path = '2018-09-03_solar_analytics_data_transfer/site_details.csv'
 
+    t0 = time()
     # Get time series data
     time_series_data = pd.read_csv(data_file_path, index_col='ts', parse_dates=True)
+    # usecols=['ts', 'c_id', 'd', 'p', 'e'],
+    print('load time series initial read {}'.format(time() - t0))
+    # time_series_data['c_id'] = pd.to_numeric(time_series_data['c_id'], downcast='integer')
+    # time_series_data['d'] = pd.to_numeric(time_series_data['d'], downcast='integer')
+    # time_series_data['p'] = pd.to_numeric(time_series_data['p'], downcast='float')
+    # time_series_data['e'] = pd.to_numeric(time_series_data['e'], downcast='float')
+    print('load time series {}'.format(time()-t0))
 
+    t0 = time()
     # Get meta data
     site_data = pd.read_csv(meta_data_file_path)
 
@@ -155,6 +165,7 @@ def get_data_using_file_path_der_explorer(time_interval, data_file_path, meta_da
     # Convert to NEM time (Brisbane time, i.e. no daylight savings). First make aware, then conver time zones, then convert back to niave.
     time_series_data.index = time_series_data.index.tz_localize('UTC')
     time_series_data.index = time_series_data.index.tz_convert('Australia/Brisbane').tz_localize(None)
+    time_series_data = time_series_data.reset_index()
     # See list of time zones: https://stackoverflow.com/questions/13866926/python-pytz-list-of-timezones
 
     # Filter for duration specified (i.e. time_interval). Change NaNs to 5s then just filter directly
@@ -185,7 +196,7 @@ def get_data_using_file_path_der_explorer(time_interval, data_file_path, meta_da
     # Combine time series and meta data
     # This should NOT cause any data deletion issues since left merge uses only keys from right frame (time_series_data) and preserves key order. 
     # Note that the inverter csv has been adjusted so that each site_id is only listed once. As result,  be careful when filtering by inverter type since some sites will have inverters which are not listed. 
-    time_series_data = time_series_data.reset_index().merge(inverter_data_cut, how = 'left', on='site_id').set_index('ts') 
+    time_series_data = time_series_data.merge(inverter_data_cut, how = 'left', on='site_id')
 
     # Add power in kW col
     if time_interval == 30:
@@ -197,6 +208,7 @@ def get_data_using_file_path_der_explorer(time_interval, data_file_path, meta_da
     else:
         print('ERROR - did not specify which data set for energy --> power calc')
 
+    print('rest of loading {}'.format(time()-t0))
     return time_series_data
 
 
@@ -262,3 +274,15 @@ def get_august_data_using_file_path(time_interval, data_file_path, meta_data_fil
         print('ERROR - did not specify which data set for energy --> power calc')
 
     return time_series_data
+
+
+def data_filter(data):
+    data = data[data['con_type'] == 'pv_site_net']
+    data = data.loc[:, ('ts', 's_postcode', 's_state', 'pv_install_date', 'power_kW')]
+    return data
+
+
+def aggregate_data(data, agg_definition=None):
+    data = data.loc[:, ('ts', 's_state', 'power_kW')]
+    agg_data = data.groupby(['ts', 's_state'], as_index=False).sum()
+    return agg_data
