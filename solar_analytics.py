@@ -7,6 +7,8 @@ import pandas as pd
 import calendar
 import datetime as dt
 from time import time
+import os
+import feather
 
 import util
 
@@ -138,35 +140,31 @@ def get_data_using_file_path(region_name_string, time_interval, data_file_path, 
 
 # --------------------------------------------------25 August data transfer - different format
 def get_data_using_file_path_der_explorer(time_interval, data_file_path, meta_data_file_path, inverter_data_path):
-    # region_name_string = 'not required' 
-    # time_interval = 5 #or 60 or 30
-    # data_file_path = '2018-09-03_solar_analytics_data_transfer/2018-08-25_sa_qld_naomi.csv'
-    # meta_data_file_path = '2018-09-03_solar_analytics_data_transfer/circuit_details.csv'
-    # inverter_data_path = '2018-09-03_solar_analytics_data_transfer/site_details.csv'
-
     t0 = time()
     # Get time series data
-    time_series_data = pd.read_csv(data_file_path, index_col='ts', parse_dates=True)
-    # usecols=['ts', 'c_id', 'd', 'p', 'e'],
+    if data_file_path[-3:] == 'csv':
+        time_series_data = pd.read_csv(data_file_path, index_col='ts', parse_dates=True,
+                                       usecols=['ts', 'c_id', 'd', 'p', 'e'])
+        time_series_data = time_series_data.reset_index()
+        time_series_data.to_feather(data_file_path[:-3] + 'feather')
+    else:
+        time_series_data = feather.read_dataframe(data_file_path)
+        time_series_data = time_series_data.set_index('ts')
     print('load time series initial read {}'.format(time() - t0))
-    # time_series_data['c_id'] = pd.to_numeric(time_series_data['c_id'], downcast='integer')
-    # time_series_data['d'] = pd.to_numeric(time_series_data['d'], downcast='integer')
-    # time_series_data['p'] = pd.to_numeric(time_series_data['p'], downcast='float')
-    # time_series_data['e'] = pd.to_numeric(time_series_data['e'], downcast='float')
-    print('load time series {}'.format(time()-t0))
-
-    t0 = time()
-    # Get meta data
-    site_data = pd.read_csv(meta_data_file_path)
-
-    # Combine time series and meta data
-    time_series_data = time_series_data.reset_index().merge(site_data, how='left', on='c_id').set_index('ts')
 
     # Convert to NEM time (Brisbane time, i.e. no daylight savings). First make aware, then conver time zones, then convert back to niave.
     time_series_data.index = time_series_data.index.tz_localize('UTC')
     time_series_data.index = time_series_data.index.tz_convert('Australia/Brisbane').tz_localize(None)
     time_series_data = time_series_data.reset_index()
     # See list of time zones: https://stackoverflow.com/questions/13866926/python-pytz-list-of-timezones
+
+    # Get meta data
+    site_data = pd.read_csv(meta_data_file_path, usecols=['site_id', 'c_id', 'con_type', 'polarity'])
+    site_data = site_data[site_data['con_type'].isin(['pv_site', 'pv_site_net'])]
+    t0 = time()
+    # Combine time series and meta data
+    time_series_data = time_series_data.merge(site_data, how='inner', on='c_id')
+    print('rest of loading {}'.format(time()-t0))
 
     # Filter for duration specified (i.e. time_interval). Change NaNs to 5s then just filter directly
     time_series_data.loc[time_series_data.d.isnull(), 'd'] = 5
@@ -191,7 +189,7 @@ def get_data_using_file_path_der_explorer(time_interval, data_file_path, meta_da
     inverter_data.loc[inverter_data.site_id.isin(multiple_inverter_sites_list), 'multiple_inverter_models'] = 1
 
     # Drop sites with multiple inverters - since this list doesn't contain c_ids, can just drop duplicates on site_id
-    inverter_data_cut = inverter_data.drop_duplicates(subset = 'site_id', keep = 'first')
+    inverter_data_cut = inverter_data.drop_duplicates(subset='site_id', keep='first')
 
     # Combine time series and meta data
     # This should NOT cause any data deletion issues since left merge uses only keys from right frame (time_series_data) and preserves key order. 
@@ -207,8 +205,6 @@ def get_data_using_file_path_der_explorer(time_interval, data_file_path, meta_da
         time_series_data['power_kW'] = time_series_data['e_polarity'] * 0.06 / 3600.0
     else:
         print('ERROR - did not specify which data set for energy --> power calc')
-
-    print('rest of loading {}'.format(time()-t0))
     return time_series_data
 
 
@@ -277,7 +273,6 @@ def get_august_data_using_file_path(time_interval, data_file_path, meta_data_fil
 
 
 def data_filter(data):
-    data = data[data['con_type'] == 'pv_site_net']
     data = data.loc[:, ('ts', 's_postcode', 's_state', 'pv_install_date', 'power_kW')]
     return data
 

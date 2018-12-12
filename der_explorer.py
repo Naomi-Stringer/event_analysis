@@ -5,6 +5,9 @@ from kivy.uix.dropdown import DropDown
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.tabbedpanel import TabbedPanel
+import matplotlib
+matplotlib.use('module://kivy.garden.matplotlib.backend_kivy')
+from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
 from kivy.uix.filechooser import FileChooserListView
 from kivy.properties import BooleanProperty, ListProperty, StringProperty, ObjectProperty, NumericProperty
 from kivy.uix.popup import Popup
@@ -13,7 +16,6 @@ import solar_analytics
 from time import time
 import pickle
 import visuals
-
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
@@ -86,7 +88,9 @@ class ExplorerPanel(TabbedPanel):
                                                                      inverter_data_path=inverter_data)
         data = solar_analytics.data_filter(data)
         data = solar_analytics.aggregate_data(data)
-        chart = visuals.area_chart(data)
+        plt = visuals.area_chart(data)
+        self.ids['data_viewer'].add_widget(FigureCanvasKivyAgg(plt.gcf()))
+        self.switch_to(self.ids['data_viewer'])
         print(data)
         print('time to load {}'.format(time() - t0))
 
