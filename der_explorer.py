@@ -1,21 +1,21 @@
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.dropdown import DropDown
-from kivy.uix.scrollview import ScrollView
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.tabbedpanel import TabbedPanel
 import matplotlib
 matplotlib.use('module://kivy.garden.matplotlib.backend_kivy')
-from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
-from kivy.uix.filechooser import FileChooserListView
-from kivy.properties import BooleanProperty, ListProperty, StringProperty, ObjectProperty, NumericProperty
+from kivy.properties import StringProperty, ObjectProperty
 from kivy.uix.popup import Popup
 import os
 import solar_analytics
 from time import time
 import pickle
 import visuals
+import sys
+import kivy
+from datetime import datetime
+
 
 class LoadDialog(FloatLayout):
     load = ObjectProperty(None)
@@ -26,11 +26,10 @@ class LoadDialog(FloatLayout):
         self.write_2_id = write_2_id
 
 
-class SaveDialog(FloatLayout):
+class SaveDialog_D(FloatLayout):
     save = ObjectProperty(None)
     cancel = ObjectProperty(None)
     text_input = ObjectProperty(None)
-
 
 
 class Row(BoxLayout):
@@ -75,9 +74,6 @@ class SubSetLoader(GridLayout):
 class ExplorerPanel(TabbedPanel):
     def __init__(self):
         super(ExplorerPanel, self).__init__()
-        self.ids['time_series'].add_data_source()
-        self.ids['meta_data'].add_data_source()
-        self.ids['inverter_data'].add_data_source()
 
     def load_data(self):
         t0 = time()
@@ -87,12 +83,23 @@ class ExplorerPanel(TabbedPanel):
                                                                      meta_data_file_path=meta_data,
                                                                      inverter_data_path=inverter_data)
         data = solar_analytics.data_filter(data)
-        data = solar_analytics.aggregate_data(data)
-        plt = visuals.area_chart(data)
-        self.ids['data_viewer'].add_widget(FigureCanvasKivyAgg(plt.gcf()))
+        self.data = solar_analytics.aggregate_data(data)
+        self.ids['graph_grid'].remove_widget(self.ids['graph_grid'].children[1])
+        canvas = visuals.area_chart(self.data)
+        self.ids['graph_grid'].add_widget(canvas, index=1)
         self.switch_to(self.ids['data_viewer'])
+        self.ids['lower_limit'].text = self.data['ts'].min().isoformat().replace('T', ' ')
+        self.ids['upper_limit'].text = self.data['ts'].max().isoformat().replace('T', ' ')
         print(data)
         print('time to load {}'.format(time() - t0))
+
+    def update_x_limits(self, lower_limit, upper_limit):
+        print('hi')
+        self.ids['graph_grid'].remove_widget(self.ids['graph_grid'].children[1])
+        lower_limit = datetime.strptime(lower_limit, '%Y-%m-%d %H:%M:%S')
+        upper_limit = datetime.strptime(upper_limit, '%Y-%m-%d %H:%M:%S')
+        canvas = visuals.update_limits(self.data, lower_limit, upper_limit)
+        self.ids['graph_grid'].add_widget(canvas, index=1)
 
     def get_state(self):
         time_interval = None
@@ -114,11 +121,13 @@ class ExplorerPanel(TabbedPanel):
     def dismiss_popup(self):
         self._popup.dismiss()
 
+    def dismiss_popup_save(self):
+        self._popup_save.dismiss()
+
     def open_save_dialog(self):
-        start_path = os.getcwd()
-        content = SaveDialog(save=self.save_state, cancel=self.dismiss_popup)
-        self._popup = Popup(title="Load data settings", content=content, size_hint=(0.9, 0.9))
-        self._popup.open()
+        content = SaveDialog_D(save=self.save_state, cancel=self.dismiss_popup_save)
+        self._popup_save = Popup(title="Save data settings", content=content, size_hint=(0.9, 0.9))
+        self._popup_save.open()
 
     def open_load_dialog(self):
         start_path = os.getcwd()
@@ -160,8 +169,20 @@ class ExplorerPanel(TabbedPanel):
 
 class DerExplorerApp(App):
     def build(self):
-        return ExplorerPanel()
+        window = ExplorerPanel()
+        window.ids['time_series'].add_data_source()
+        window.ids['meta_data'].add_data_source()
+        window.ids['inverter_data'].add_data_source()
+        window.ids['graph_grid'].add_widget(visuals.empty_fig(), index=1)
+        return window
 
+def resourcePath():
+    '''Returns path containing content - either locally or in pyinstaller tmp file'''
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS)
+
+    return os.path.join(os.path.abspath("."))
 
 if __name__ == "__main__":
+    kivy.resources.resource_add_path(resourcePath())
     DerExplorerApp().run()

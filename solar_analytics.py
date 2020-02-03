@@ -230,7 +230,7 @@ def get_august_data_using_file_path(time_interval, data_file_path, meta_data_fil
     # See list of time zones: https://stackoverflow.com/questions/13866926/python-pytz-list-of-timezones
 
     # Filter for duration specified (i.e. time_interval). Change NaNs to 5s then just filter directly
-    time_series_data.loc[time_series_data.d.isnull(),'d'] = 5
+    time_series_data.loc[time_series_data.d.isnull(), 'd'] = 5
     time_series_data = time_series_data[time_series_data['d'] == time_interval]
 
     # Correct polarity of energy and power
@@ -252,7 +252,7 @@ def get_august_data_using_file_path(time_interval, data_file_path, meta_data_fil
     inverter_data.loc[inverter_data.site_id.isin(multiple_inverter_sites_list), 'multiple_inverter_models'] = 1
 
     # Drop sites with multiple inverters - since this list doesn't contain c_ids, can just drop duplicates on site_id
-    inverter_data_cut = inverter_data.drop_duplicates(subset = 'site_id', keep = 'first')
+    inverter_data_cut = inverter_data.drop_duplicates(subset='site_id', keep='first')
 
     # Combine time series and meta data
     # This should NOT cause any data deletion issues since left merge uses only keys from right frame (time_series_data) and preserves key order.

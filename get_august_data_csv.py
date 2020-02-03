@@ -161,15 +161,15 @@ error_metric['above_spec'] = 0
 error_metric['mixed_wrt_spec'] = 1
 
 # Groupby for min, max. 
-min_diff_df = pd.DataFrame({'min_diff' : output_df_subset.groupby('c_id')['diff_actual_cf_ideal'].min()}).reset_index()
-max_diff_df = pd.DataFrame({'max_diff' : output_df_subset.groupby('c_id')['diff_actual_cf_ideal'].max()}).reset_index()
+min_diff_df = pd.DataFrame({'min_diff': output_df_subset.groupby('c_id')['diff_actual_cf_ideal'].min()}).reset_index()
+max_diff_df = pd.DataFrame({'max_diff': output_df_subset.groupby('c_id')['diff_actual_cf_ideal'].max()}).reset_index()
 # Add to error_metric then get flags (below)
 error_metric = error_metric.merge(min_diff_df)
 error_metric = error_metric.merge(max_diff_df)
 
 # Determine whether all points are 'above' the specified response (or 'below' or 'mixed') and flag accordingly
-error_metric.loc[error_metric['max_diff']<=0, 'below_spec'] = 1
-error_metric.loc[error_metric['min_diff']>=0, 'above_spec'] = 1
+error_metric.loc[error_metric['max_diff'] <= 0, 'below_spec'] = 1
+error_metric.loc[error_metric['min_diff'] >= 0, 'above_spec'] = 1
 error_metric['mixed_wrt_spec'] = error_metric['mixed_wrt_spec'] - error_metric['below_spec'] - error_metric['above_spec']
 
 # Get final error metric, taking into account whether above/below or mixed wrt spec

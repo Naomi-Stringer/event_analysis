@@ -17,7 +17,8 @@
                 text: "Load"
                 on_release: root.load(filechooser.selection[0])
 
-<SaveDialog>:
+
+<SaveDialog_D>:
     BoxLayout:
         size: root.size
         pos: root.pos
@@ -242,6 +243,28 @@
                     group: 'time'
     DataViewer:
         id: data_viewer
+        GridLayout:
+            id: graph_grid
+            cols: 1
+            BoxLayout:
+                id: x_limits
+                size_hint_y: None
+                height: 30
+                Button:
+                    id: reset_xlimits
+                    text: "Set X Limits"
+                    on_release: root.update_x_limits(lower_limit.text, upper_limit.text)
+                TextInput:
+                    id: lower_limit
+                    size_hint_x: None
+                    width: 150
+                TextInput:
+                    id: upper_limit
+                    size_hint_x: None
+                    width: 150
+
+
+
 
 
 
